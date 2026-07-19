@@ -29,27 +29,32 @@ try:
 except:
     gi.require_version('WebKit2', '4.0')
 
-from bs4 import BeautifulSoup
-from gi.repository import Gdk, Gtk, GtkSource, Pango, WebKit2, GLib
-from locale import gettext as _
-from urllib.request import urlopen
-import markdown
-import os
-import pdfkit
 import re, subprocess, datetime, os, webbrowser, _thread, sys, locale
+import os
 import tempfile
 import traceback
 import styles
 import unicodedata
 import warnings
+
+from locale import gettext as _
+from urllib.request import urlopen
+
+import pdfkit
+import markdown
 from findBar import FindBar
+from bs4 import BeautifulSoup
+from gi.repository import Gdk, Gtk, GtkSource, Pango, WebKit2, GLib
 
 # Check if gtkspellcheck is installed
 try:
     from gtkspellcheck import SpellChecker
     spellcheck_enabled = True
 except:
-    print("*Spellchecking not enabled.\n*To enable spellchecking install pygtkspellcheck\n*https://pypi.python.org/pypi/pygtkspellcheck/")
+    print("""
+* Spell checking not enabled.
+* To enable, install pygtkspellcheck (https://pypi.python.org/pypi/pygtkspellcheck)
+""", sys.stderr)
     spellcheck_enabled = False
 
 import logging
@@ -213,6 +218,13 @@ class RemarkableWindow(Window):
 
         self.statusbar = self.builder.get_object("statusbar")
         self.context_id = self.statusbar.get_context_id("main status bar")
+
+        self.delay_label = Gtk.Label()
+        self.delay_label.show()
+
+        # Pack the label into the statusbar's internal message area
+        message_area = self.statusbar.get_message_area()
+        message_area.pack_end(self.delay_label, False, False, 0)
 
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.update_status_bar(self)
@@ -1755,7 +1767,8 @@ class RemarkableWindow(Window):
                 title = "*" + title
                 self.window.set_title(title)
 
-    """
+    def cursor_ctrl_arrow_rtl_fix(self, widget, event):
+        """
         GtkTextView simply does not seem to handle visual word
         movements correctly in bi-directional move.
         This is a hack for going the opposite of logical order
@@ -1775,8 +1788,7 @@ class RemarkableWindow(Window):
         in them to the point where it gets irritating.
 
         In short, this is a quick, but useful, hack.
-    """
-    def cursor_ctrl_arrow_rtl_fix(self, widget, event):
+        """
         if event.keyval in [Gdk.KEY_Left, Gdk.KEY_Right]:
             if event.state & Gdk.ModifierType.CONTROL_MASK:
                 is_rtl = self.remarkable_settings['rtl']
@@ -1795,19 +1807,25 @@ class RemarkableWindow(Window):
 
         return False
 
-    """
-        Update the text in the status bar. Displays the number of lines,
-        words and characters. This approach is possible inefficient.
-    """
     def update_status_bar(self, widget):
+        """
+        Update the text in the status bar. Displays the number of lines, words
+        and characters. This approach is possibly inefficient.
+        """
         self.statusbar.pop(self.context_id)
         lines = self.text_buffer.get_line_count()
         chars = self.text_buffer.get_char_count()
-        words = self.text_buffer.get_text(self.text_buffer.get_start_iter(), self.text_buffer.get_end_iter(), False).split()
+        words = self.text_buffer.get_text(
+            self.text_buffer.get_start_iter(),
+            self.text_buffer.get_end_iter(), False
+        ).split()
         word_count = 0
-        word_exceptions = ["#", "##", "###", "####", "#####", "######", "*", "**", "-", "+", "_", "/", "\\", "/", ":",
-                           ";", "@", "'", "~", "(", ")", "[", "]", "{", "}", "((", "))", "+-", "-+", "/=", ".", "|",
-                           "!", "!!", "!!!", "$", "", "%", "^", "&"]  # Exclude these from word count
+        word_exceptions = [  # Exclude these from word count
+            "#", "##", "###", "####", "#####", "######", "*", "**", "-", "+",
+            "_", "/", "\\", "/", ":", ";", "@", "'", "~", "(", ")", "[", "]",
+            "{", "}", "((", "))", "+-", "-+", "/=", ".", "|",
+            "!", "!!", "!!!", "$", "", "%", "^", "&"
+        ]
         for w in words:
             if w not in word_exceptions:
                 if not re.match('^[0-9]{1,3}$', w):
@@ -1819,11 +1837,15 @@ class RemarkableWindow(Window):
         except:
             delay = 1
 
-        self.status_message = "Lines: " + str(lines) + ", " + "Words: " + str(word_count) + ", Characters: " + str(chars) + ". " +"Live update delay: ".rjust(100) + str(delay) + " sec."
+        self.status_message = f"Lines: {lines}, Words: {word_count}, Characters: {chars}"
         self.statusbar.push(self.context_id, self.status_message)
+        self.delay_label.set_text("Live update delay: " + str(delay) + " sec.")
 
     def update_live_preview(self, widget, line_number=None):
-        text = self.text_buffer.get_text(self.text_buffer.get_start_iter(), self.text_buffer.get_end_iter(), False)
+        text = self.text_buffer.get_text(
+                self.text_buffer.get_start_iter(),
+                self.text_buffer.get_end_iter(),
+                False)
 
         if line_number is not None:
             lines = text.split('\n')
@@ -1844,17 +1866,16 @@ class RemarkableWindow(Window):
         # Update the display, supporting relative paths to local images
         self.live_preview.load_html(html, "file://{}".format(os.path.abspath(self.name)))
 
-    """
-        This function suppresses the messages from the WebKit (live preview) console
-    """
     def _javascript_console_message(self, view, message, line, sourceid):
+        """
+        Suppresses the messages from the WebKit (live preview) console
+        """
         return True
 
-
-    """
-        This function deletes any temporary files that were created during execution
-    """
     def clean_up(self):
+        """
+        Deletes any temporary files that were created during execution
+        """
         i = len(self.temp_file_list) - 1
         while i >= 0:
             os.remove(self.temp_file_list[0].name)

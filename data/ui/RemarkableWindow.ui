@@ -1568,7 +1568,7 @@
             <property name="margin-right">2</property>
             <property name="margin-top">2</property>
             <property name="margin-bottom">2</property>
-            <property name="orientation">vertical</property>
+            <property name="orientation">horizontal</property>
           </object>
           <packing>
             <property name="expand">False</property>
