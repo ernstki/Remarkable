@@ -222,16 +222,24 @@ class RemarkableWindow(Window):
         self.delay_label = Gtk.Label()
         self.delay_label.show()
 
-        # Pack the label into the statusbar's internal message area
+        self.delay_eventbox = Gtk.EventBox()
+        self.delay_eventbox.add(self.delay_label)
+        self.delay_eventbox.add_events(Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.delay_eventbox.connect("scroll-event", self.on_delay_scroll)
+        self.delay_eventbox.connect("button-press-event", self.on_delay_button_press)
+        self.delay_eventbox.set_tooltip_text("Scroll to adjust delay (0.5s - 5.0s). Double-click to reset.")
+        self.delay_eventbox.show()
+
+        # Pack the eventbox into the statusbar's internal message area
         message_area = self.statusbar.get_message_area()
-        message_area.pack_end(self.delay_label, False, False, 0)
+        message_area.pack_end(self.delay_eventbox, False, False, 0)
 
         self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
         self.update_status_bar(self)
         self.update_live_preview(self)
 
         self.delay_started = False
-        self.delay = 1
+        self.delay = 1.0
         text = ""
 
         self.wrap_box = self.builder.get_object("wrap_box")
@@ -1133,12 +1141,27 @@ class RemarkableWindow(Window):
 
     def on_menuitem_editor_delay_change(self, widget, delay):
         if delay == 0:
-           self.delay = 1
+           self.delay = 1.0
         else:
               self.delay += delay
               if self.delay < 0:
                  self.delay = 0
         self.update_status_bar(self)
+
+    def on_delay_scroll(self, widget, event):
+        if event.direction == Gdk.ScrollDirection.UP:
+            self.delay = min(5.0, self.delay + 0.5)
+        elif event.direction == Gdk.ScrollDirection.DOWN:
+            self.delay = max(0.5, self.delay - 0.5)
+        self.update_status_bar(self)
+        return True
+
+    def on_delay_button_press(self, widget, event):
+        if event.type == Gdk.EventType._2BUTTON_PRESS:
+            self.delay = 1.0
+            self.update_status_bar(self)
+            return True
+        return False
 
     def on_menuitem_statusbar_activate(self, widget):
         if self.statusbar.get_visible():
@@ -1835,7 +1858,7 @@ class RemarkableWindow(Window):
         try:
             delay = self.delay
         except:
-            delay = 1
+            delay = 1.0
 
         self.status_message = f"Lines: {lines}, Words: {word_count}, Characters: {chars}"
         self.statusbar.push(self.context_id, self.status_message)
