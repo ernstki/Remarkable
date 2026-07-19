@@ -7,6 +7,8 @@ remarkable (1.95kme1) UNRELEASED; urgency=medium
     zoom level
   * added jonbcooper's toolbar patch, with editor text zoom, and tried to
     deconflict its shortcuts with the existing ones for the HTML preview
+  * added recent files list (courtesy @AStepaniuk in
+    https://github.com/jamiemcg/Remarkable/pull/342)
 
  -- Kevin Ernst <ernstki@mail.uc.edu>  Sun, 19 Jul 2026 10:54:12 -0400
 
