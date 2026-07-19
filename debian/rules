@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3
+
+override_dh_auto_install:
+	# Create necessary directories
+	install -d debian/remarkable/usr/bin
+	install -d debian/remarkable/usr/lib/python3/dist-packages
+	install -d debian/remarkable/usr/share/applications
+	install -d debian/remarkable/usr/share/remarkable
+	
+	# Install the Python packages to the standard system path
+	cp -a remarkable debian/remarkable/usr/lib/python3/dist-packages/
+	cp -a remarkable_lib debian/remarkable/usr/lib/python3/dist-packages/
+	
+	# Install data files (UI, media, etc.)
+	cp -a data/* debian/remarkable/usr/share/remarkable/
+	
+	# Install the main executable
+	install -m 755 bin/remarkable debian/remarkable/usr/bin/remarkable
+	
+	# Install the .desktop file
+	install -m 644 remarkable.desktop debian/remarkable/usr/share/applications/remarkable.desktop

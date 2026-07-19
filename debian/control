@@ -1,10 +1,13 @@
-Package: remarkable
-Version: 1.95
-Architecture: all
-Maintainer: Jamie McGowan <jamiemcgowan.dev@gmail.com>
-Depends: python3-all, python3-bs4, python3-gi, python3-gtkspellcheck, python3-markdown, python3-setuptools, gir1.2-glib-2.0, gir1.2-gtk-3.0, gir1.2-gtksource-3.0, gir1.2-webkit2-4.1, wkhtmltopdf
+Source: remarkable
 Section: python
 Priority: extra
+Maintainer: Jamie McGowan <jamiemcgowan.dev@gmail.com>
+Homepage: https://github.com/jamiemcg/Remarkable
+Build-Depends: debhelper (>= 10), dh-python, python3
+
+Package: remarkable
+Architecture: all
+Depends: python3, python3-bs4, python3-gi, python3-gtkspellcheck, python3-markdown, python3-pdfkit, python3-setuptools, gir1.2-glib-2.0, gir1.2-gtk-3.0, gir1.2-gtksource-3.0, gir1.2-webkit2-4.1, wkhtmltopdf
 Description: A free fully featured markdown editor.
  Remarkable is a free fully featured markdown editor. It has a syntax
  like Github flavoured markdown. With it you can write markdown and view
